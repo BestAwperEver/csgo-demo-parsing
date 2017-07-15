@@ -135,6 +135,7 @@ public class Quickstart {
     	int kills_cur;
     	int assists;
     	int mvp;
+    	boolean disconnected = false;
     	public String toString() {
     		StringBuilder s = new StringBuilder();
     		s.append("Nick: " + nick);
@@ -154,11 +155,11 @@ public class Quickstart {
     }
     
 	public static List<Player> players = Arrays.asList(
-			new Player("lolwto?!"),
-			new Player("Sidekrown"),
 			new Player("Maximka"),
-			new Player("Sup"),
-			new Player("aydin"));
+			new Player("sup"),
+			new Player("aydin"),
+			new Player("lolwto?!"),
+			new Player("Sidekrown"));
     
     public static void parseInfo(CSGOFileParser csgofp) throws FileNotFoundException, IOException {
     	
@@ -192,7 +193,7 @@ public class Quickstart {
 		    	case "player_disconnected": {
 		    		for (Player player : players) {
 			    		if (event.get("userid").equals(player.nick)) {
-		    				player.rounds--;
+		    				player.disconnected = true;
 		    			}
 		    		}
 		    	} break;
@@ -219,7 +220,11 @@ public class Quickstart {
 		    		for (Player player : players) {
 			    		if (player.nick.length() <= event.get("userid").length()
 		    					&& event.get("userid").substring(0, player.nick.length()).equals(player.nick)) {
-		    				player.rounds++;
+		    				if (!player.disconnected) {
+		    					player.rounds++;
+		    				} else {
+		    					player.disconnected = false;
+		    				}
 		    			}
 		    		}
 	    		} break;
@@ -253,48 +258,285 @@ public class Quickstart {
     }
     
     public static void main(String[] args) throws IOException {
-    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\info2.txt");
+    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\info.txt");
     	parseInfo(csgofp);
     	for (Player player : players) {
     		System.out.println(player.toString());
     		System.out.println();
     	}
+    	updateInfo();
+    	updateGraph();
     }
 
-    public static void main3() throws IOException {
-        // Build a new authorized API client service.
-        Sheets service = getSheetsService();
-
-        // Prints the names and majors of students in a sample spreadsheet:
-        // https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+    public static void updateInfo() throws IOException {
         String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
-        String range = "Ëèñò5!A1:B2";
-        ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
-                .execute();
-            List<List<Object>> values2 = response.getValues();
-            if (values2 == null || values2.size() == 0) {
-            	System.out.println("No data found.");
-            } else {
-              for (List row : values2) {
-    			// Print columns A and E, which correspond to indices 0 and 4.
-    			System.out.printf("%s, %s\n", row.get(0));
-              	}
-            }
-        List<Object> objectList = new ArrayList<Object>(
-        		Arrays.asList("asdf")
-        		);
+
+        // How the input data should be interpreted.
+        String valueInputOption = "USER_ENTERED";
+
+        // How the input data should be inserted.
+        String insertDataOption = "INSERT_ROWS";
+        
+        String range = "K!B:F";
+        
+        List<Object> objectList = new ArrayList<Object>();
+        for (Player player : players) {
+        	objectList.add(player.kills);
+        }
         List<List<Object>> values = Arrays.asList(
         		objectList
                 // Additional rows ...
                 );
         ValueRange body = new ValueRange()
                 .setValues(values);
-        UpdateValuesResponse result =
-                service.spreadsheets().values().update(spreadsheetId, range, body)
-                .setValueInputOption("USER_ENTERED")
-                .execute();
-        System.out.printf("%d cells updated.", result.getUpdatedCells());
+
+        Sheets sheetsService = getSheetsService();
+        
+        Sheets.Spreadsheets.Values.Append request =
+            sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        AppendValuesResponse response = request.execute();
+        
+        //----
+        
+        range = "D!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.deaths);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+        //----
+        
+        range = "HS!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.headshots);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+        //----
+        
+        range = "'R'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.rounds);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+        //----
+        
+        range = "'1K'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.k1);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'2K'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.k2);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'3K'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.k3);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'4K'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.k4);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'5K'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.k5);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'H'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.assists);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+        
+//----
+        
+        range = "'MVP'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.mvp);
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
+   
     }
 
+    public static void updateGraph() throws IOException {
+    	String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
+    	Sheets sheetsService = getSheetsService();
+    	String range = "Ëèñò2!S2:S6";
+    	
+    	ValueRange result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute();
+
+    	List<List<Object>> new_row = result.getValues();
+    	
+    	int N = new_row.size();
+    	for (int i = 1; i < N; ++i) {
+    		new_row.get(0).addAll(new_row.get(1));
+    		new_row.remove(1);
+    	}
+    	
+    	// How the input data should be interpreted.
+        String valueInputOption = "USER_ENTERED";
+
+        // How the input data should be inserted.
+        String insertDataOption = "INSERT_ROWS";
+
+        range = "Ëèñò3!H2";
+        
+        result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute();
+
+        List<Object> objectList = new ArrayList<Object>();
+
+        objectList.add(Integer.parseUnsignedInt( (String) result.getValues().get(0).get(0) ) + 1);
+
+//        List<List<Object>> values = Arrays.asList(
+//        		objectList
+//                );
+//        
+        new_row.get(0).addAll(0, objectList);
+        
+        ValueRange body = new ValueRange()
+                .setValues(new_row);
+        
+        range = "Ëèñò3!A:F";
+        
+        Sheets.Spreadsheets.Values.Append request =
+            sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        AppendValuesResponse response = request.execute();
+    }
+    
 }
