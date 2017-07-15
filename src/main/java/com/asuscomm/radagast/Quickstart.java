@@ -130,7 +130,7 @@ public class Quickstart {
     	int kills;
     	int deaths;
     	int headshots;
-    	int rounds;
+    	int rounds = 1;
     	int k1, k2, k3, k4, k5;
     	int kills_cur;
     	int assists;
