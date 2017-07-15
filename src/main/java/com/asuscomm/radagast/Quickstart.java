@@ -1,3 +1,5 @@
+package com.asuscomm.radagast;
+
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -12,13 +14,15 @@ import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.*;
 import com.google.api.services.sheets.v4.Sheets;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 public class Quickstart {
     /** Application name. */
@@ -118,7 +122,146 @@ public class Quickstart {
         }   	
     }
     
+    public static class Player {
+    	Player(String nick) {
+    		this.nick = nick;
+    	}
+    	String nick;
+    	int kills;
+    	int deaths;
+    	int headshots;
+    	int rounds;
+    	int k1, k2, k3, k4, k5;
+    	int kills_cur;
+    	int assists;
+    	int mvp;
+    	public String toString() {
+    		StringBuilder s = new StringBuilder();
+    		s.append("Nick: " + nick);
+    		s.append("\nKills: " + kills);
+    		s.append("\nDeaths: " + deaths);
+    		s.append("\nHeadshots: " + headshots);
+    		s.append("\nRounds: " + rounds);
+    		s.append("\n1 kill: " + k1);
+    		s.append("\n2 kills: " + k2);
+    		s.append("\n3 kills: " + k3);
+    		s.append("\n4 kills: " + k4);
+    		s.append("\n5 kills: " + k5);
+    		s.append("\nAssists: " + assists);
+    		s.append("\nMVPs: " + mvp);
+    		return s.toString();
+    	}
+    }
+    
+	public static List<Player> players = Arrays.asList(
+			new Player("lolwto?!"),
+			new Player("Sidekrown"),
+			new Player("Maximka"),
+			new Player("Sup"),
+			new Player("aydin"));
+    
+    public static void parseInfo(CSGOFileParser csgofp) throws FileNotFoundException, IOException {
+    	
+    	boolean game_started = false;
+    		
+//    	Map<Integer, String> indices = new HashMap<Integer, String>();
+    	Map<String, String> event = csgofp.nextEvent();
+    	
+    	while (event != null) { 
+    		
+	    	String type = event.get("name");
+	    	
+	    	if (!game_started) {
+	    		
+	    		switch (type) {
+	//    		case "player_spawn": {
+	//    			String user = event.get("userid");
+	//    			int i = user.indexOf(':');
+	//    			String nick = user.substring(0, i-1);
+	//    			int index = Integer.parseInt(user.substring(i, -1));
+	//    			indices.put(index, nick);
+	//    		} break;
+	    		case  "begin_new_match": {
+	    			game_started = true;
+	    		} break;
+	    		}
+	    		
+	    	} else {
+	    	
+		    	switch (type) {
+		    	case "player_disconnected": {
+		    		for (Player player : players) {
+			    		if (event.get("userid").equals(player.nick)) {
+		    				player.rounds--;
+		    			}
+		    		}
+		    	} break;
+		    	case "player_death": {
+		    		for (Player player : players) {
+		    			if (player.nick.length() <= event.get("attacker").length()
+		    					&& event.get("attacker").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.kills_cur++;
+		    				if (event.get("headshot").equals("1")) {
+		    					player.headshots++;
+		    				}
+		    			}
+		    			if (player.nick.length() <= event.get("userid").length()
+		    					&& event.get("userid").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.deaths++;
+		    			}
+		    			if (player.nick.length() <= event.get("assister").length()
+		    					&& event.get("assister").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.assists++;
+		    			}
+		    		}
+		    	} break;
+		    	case "player_spawn": {
+		    		for (Player player : players) {
+			    		if (player.nick.length() <= event.get("userid").length()
+		    					&& event.get("userid").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.rounds++;
+		    			}
+		    		}
+	    		} break;
+		    	case "round_mvp": {
+		    		for (Player player: players) {
+		    			if (player.nick.length() <= event.get("userid").length()
+		    					&& event.get("userid").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.mvp++;
+		    			}
+		    		}
+		    	} break;
+		    	case "round_end": {
+		    		for (Player player: players) {
+		    			switch (player.kills_cur) {
+		    			case 1: player.k1++; break;
+		    			case 2: player.k2++; break;
+		    			case 3: player.k3++; break;
+		    			case 4: player.k4++; break;
+		    			case 5: player.k5++; break;
+		    			}
+		    			player.kills += player.kills_cur;
+		    			player.kills_cur = 0;
+		    		}
+		    	}
+		    	}
+	    	
+	    	}
+	    	
+	    	event = csgofp.nextEvent();
+    	}
+    }
+    
     public static void main(String[] args) throws IOException {
+    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\info2.txt");
+    	parseInfo(csgofp);
+    	for (Player player : players) {
+    		System.out.println(player.toString());
+    		System.out.println();
+    	}
+    }
+
+    public static void main3() throws IOException {
         // Build a new authorized API client service.
         Sheets service = getSheetsService();
 
@@ -153,6 +296,5 @@ public class Quickstart {
                 .execute();
         System.out.printf("%d cells updated.", result.getUpdatedCells());
     }
-
 
 }
