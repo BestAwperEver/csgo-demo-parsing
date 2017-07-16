@@ -136,6 +136,10 @@ public class Quickstart {
     	int assists;
     	int mvp;
     	boolean disconnected = false;
+    	int damage;
+    	public int adr() {
+    		return (int)(damage/(float)rounds);
+    	}
     	public String toString() {
     		StringBuilder s = new StringBuilder();
     		s.append("Nick: " + nick);
@@ -150,6 +154,7 @@ public class Quickstart {
     		s.append("\n5 kills: " + k5);
     		s.append("\nAssists: " + assists);
     		s.append("\nMVPs: " + mvp);
+    		s.append("\nADR: " + adr());
     		return s.toString();
     	}
     }
@@ -216,6 +221,14 @@ public class Quickstart {
 		    			}
 		    		}
 		    	} break;
+		    	case "player_hurt": {
+		    		for (Player player : players) {
+		    			if (player.nick.length() <= event.get("attacker").length()
+		    					&& event.get("attacker").substring(0, player.nick.length()).equals(player.nick)) {
+		    				player.damage += Integer.parseUnsignedInt(event.get("dmg_health"));
+		    			}
+		    		}
+		    	} break;
 		    	case "player_spawn": {
 		    		for (Player player : players) {
 			    		if (player.nick.length() <= event.get("userid").length()
@@ -271,33 +284,43 @@ public class Quickstart {
     public static void updateInfo() throws IOException {
         String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
 
+        Sheets sheetsService = getSheetsService();
+        
         // How the input data should be interpreted.
         String valueInputOption = "USER_ENTERED";
 
         // How the input data should be inserted.
         String insertDataOption = "INSERT_ROWS";
         
-        String range = "K!B:F";
-        
         List<Object> objectList = new ArrayList<Object>();
+        
+        List<List<Object>> values = null;
+        
+        Sheets.Spreadsheets.Values.Append request = null;
+        
+        AppendValuesResponse response = null;
+        
+        ValueRange body = new ValueRange();
+        
+        String range = null;
+             
+        range = "K!B:F";
+        
+        objectList.clear();
+        
         for (Player player : players) {
         	objectList.add(player.kills);
         }
-        List<List<Object>> values = Arrays.asList(
-        		objectList
-                // Additional rows ...
-                );
-        ValueRange body = new ValueRange()
-                .setValues(values);
-
-        Sheets sheetsService = getSheetsService();
         
-        Sheets.Spreadsheets.Values.Append request =
-            sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        values = Arrays.asList(objectList);
+
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
         request.setValueInputOption(valueInputOption);
         request.setInsertDataOption(insertDataOption);
 
-        AppendValuesResponse response = request.execute();
+        response = request.execute();
         
         //----
         
@@ -488,7 +511,25 @@ public class Quickstart {
         request.setInsertDataOption(insertDataOption);
 
         response = request.execute();
-   
+        
+//----
+        
+        range = "'ADR'!B:F";
+        
+        objectList.clear();
+        
+        for (Player player : players) {
+        	objectList.add(player.adr());
+        }
+        values = Arrays.asList(objectList);
+        
+        body.setValues(values);
+        
+        request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+        request.setValueInputOption(valueInputOption);
+        request.setInsertDataOption(insertDataOption);
+
+        response = request.execute();
     }
 
     public static void updateGraph() throws IOException {
