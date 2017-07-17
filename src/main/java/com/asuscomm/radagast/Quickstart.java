@@ -137,6 +137,10 @@ public class Quickstart {
     	int mvp;
     	boolean disconnected = false;
     	int damage;
+    	int team_damage;
+    	float team_flash;
+    	float self_flash;
+    	float enemy_flash;
     	public int adr() {
     		return (int)(damage/(float)rounds);
     	}
@@ -155,6 +159,10 @@ public class Quickstart {
     		s.append("\nAssists: " + assists);
     		s.append("\nMVPs: " + mvp);
     		s.append("\nADR: " + adr());
+    		s.append("\nTeam damage: " + team_damage);
+    		s.append("\nSelf flash: " + self_flash);
+    		s.append("\nTeam flash: " + team_flash);
+    		s.append("\nEnemy flash: " + enemy_flash);
     		return s.toString();
     	}
     }
@@ -199,6 +207,7 @@ public class Quickstart {
 		    		for (Player player : players) {
 			    		if (event.get("userid").equals(player.nick)) {
 		    				player.disconnected = true;
+		    				break;
 		    			}
 		    		}
 		    	} break;
@@ -225,7 +234,39 @@ public class Quickstart {
 		    		for (Player player : players) {
 		    			if (player.nick.length() <= event.get("attacker").length()
 		    					&& event.get("attacker").substring(0, player.nick.length()).equals(player.nick)) {
-		    				player.damage += Integer.parseUnsignedInt(event.get("dmg_health"));
+		    				boolean team_damage = false;
+		    				for (Player player2 : players) {
+		    					if (player2.nick.length() <= event.get("userid").length()
+		    					&& event.get("userid").substring(0, player2.nick.length()).equals(player2.nick)) {
+		    						player.team_damage += Integer.parseUnsignedInt(event.get("dmg_health"));
+		    						team_damage = true;
+		    						break;
+		    					}
+		    				}
+		    				if (team_damage == false) player.damage += Integer.parseUnsignedInt(event.get("dmg_health"));
+		    				break;
+		    			}
+		    		}
+		    	} break;
+		    	case "player_blind": {
+		    		for (Player player : players) {
+		    			if (player.nick.length() <= event.get("attacker").length()
+		    					&& event.get("attacker").substring(0, player.nick.length()).equals(player.nick)) {
+		    				boolean team_flash = false;
+		    				for (Player player2 : players) {
+		    					if (player2.nick.length() <= event.get("userid").length()
+		    					&& event.get("userid").substring(0, player2.nick.length()).equals(player2.nick)) {
+		    						if (player == player2) {
+		    							player.self_flash += Float.parseFloat(event.get("blind_duration"));
+		    						} else {
+		    							player.team_flash += Float.parseFloat(event.get("blind_duration"));
+		    						}
+		    						team_flash = true;
+		    						break;
+		    					}
+		    				}
+		    				if (team_flash == false) player.enemy_flash += Float.parseFloat(event.get("blind_duration"));
+		    				break;
 		    			}
 		    		}
 		    	} break;
@@ -238,7 +279,8 @@ public class Quickstart {
 		    				} else {
 		    					player.disconnected = false;
 		    				}
-		    			}
+		    				break;
+			    		}
 		    		}
 	    		} break;
 		    	case "round_mvp": {
@@ -246,6 +288,7 @@ public class Quickstart {
 		    			if (player.nick.length() <= event.get("userid").length()
 		    					&& event.get("userid").substring(0, player.nick.length()).equals(player.nick)) {
 		    				player.mvp++;
+		    				break;
 		    			}
 		    		}
 		    	} break;
@@ -271,14 +314,14 @@ public class Quickstart {
     }
     
     public static void main(String[] args) throws IOException {
-    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\info.txt");
+    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\info.txt");
     	parseInfo(csgofp);
     	for (Player player : players) {
     		System.out.println(player.toString());
     		System.out.println();
     	}
     	updateInfo();
-    	updateGraph();
+    	//updateGraph();
     }
 
     public static void updateInfo() throws IOException {
@@ -303,6 +346,8 @@ public class Quickstart {
         ValueRange body = new ValueRange();
         
         String range = null;
+        
+//----
              
         range = "K!B:F";
         
@@ -322,7 +367,7 @@ public class Quickstart {
 
         response = request.execute();
         
-        //----
+//----
         
         range = "D!B:F";
         
@@ -341,7 +386,7 @@ public class Quickstart {
 
         response = request.execute();
         
-        //----
+//----
         
         range = "HS!B:F";
         
@@ -360,7 +405,7 @@ public class Quickstart {
 
         response = request.execute();
         
-        //----
+//----
         
         range = "'R'!B:F";
         
@@ -379,7 +424,7 @@ public class Quickstart {
 
         response = request.execute();
         
-        //----
+//----
         
         range = "'1K'!B:F";
         
@@ -530,6 +575,82 @@ public class Quickstart {
         request.setInsertDataOption(insertDataOption);
 
         response = request.execute();
+        
+//----
+      
+		  range = "'TD'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.team_damage);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();
+		  
+//----
+	      
+		  range = "'SF'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.self_flash);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();
+		  
+//----
+	      
+		  range = "'TF'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.team_flash);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();
+		  
+//----
+	      
+		  range = "'EF'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.enemy_flash);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();
     }
 
     public static void updateGraph() throws IOException {
