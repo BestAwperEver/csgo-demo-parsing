@@ -298,7 +298,10 @@ public class Quickstart {
 		    						break;
 		    					}
 		    				}
-		    				if (team_flash == false) player.enemy_flash += Float.parseFloat(event.get("blind_duration"));
+		    				if (team_flash == false && (event.get("userid").length() != 4
+		    						|| !event.get("userid").substring(0, 4).equals("GOTV"))) {
+		    					player.enemy_flash += Float.parseFloat(event.get("blind_duration"));
+		    				}
 		    				break;
 		    			}
 		    		}
