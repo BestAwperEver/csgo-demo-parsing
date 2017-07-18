@@ -18,11 +18,15 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class Quickstart {
     /** Application name. */
@@ -138,6 +142,7 @@ public class Quickstart {
     	boolean disconnected = false;
     	int damage;
     	int team_damage;
+    	int open_kills;
     	float team_flash;
     	float self_flash;
     	float enemy_flash;
@@ -163,7 +168,27 @@ public class Quickstart {
     		s.append("\nSelf flash: " + self_flash);
     		s.append("\nTeam flash: " + team_flash);
     		s.append("\nEnemy flash: " + enemy_flash);
+    		s.append("\nOpen kills: " + open_kills);
     		return s.toString();
+    	}
+    	public void clear() {
+    		kills = 0;
+    		deaths = 0;
+    		headshots = 0;
+    		rounds = 1;
+    		k1 = 0;
+    		k2 = 0;
+    		k3 = 0;
+    		k4 = 0;
+    		k5 = 0;
+    		assists = 0;
+    		mvp = 0;
+    		damage = 0;
+    		team_damage = 0;
+    		self_flash = 0;
+    		team_flash = 0;
+    		enemy_flash = 0;
+    		open_kills = 0;
     	}
     }
     
@@ -177,6 +202,7 @@ public class Quickstart {
     public static void parseInfo(CSGOFileParser csgofp) throws FileNotFoundException, IOException {
     	
     	boolean game_started = false;
+    	boolean open_kill = false;
     		
 //    	Map<Integer, String> indices = new HashMap<Integer, String>();
     	Map<String, String> event = csgofp.nextEvent();
@@ -211,6 +237,9 @@ public class Quickstart {
 		    			}
 		    		}
 		    	} break;
+		    	case "round_start": {
+		    		open_kill = false;
+		    	} break;
 		    	case "player_death": {
 		    		for (Player player : players) {
 		    			if (player.nick.length() <= event.get("attacker").length()
@@ -218,6 +247,9 @@ public class Quickstart {
 		    				player.kills_cur++;
 		    				if (event.get("headshot").equals("1")) {
 		    					player.headshots++;
+		    				}
+		    				if (open_kill == false) {
+		    					player.open_kills++;
 		    				}
 		    			}
 		    			if (player.nick.length() <= event.get("userid").length()
@@ -229,6 +261,7 @@ public class Quickstart {
 		    				player.assists++;
 		    			}
 		    		}
+					open_kill = true;
 		    	} break;
 		    	case "player_hurt": {
 		    		for (Player player : players) {
@@ -313,22 +346,43 @@ public class Quickstart {
     	}
     }
     
+    public static String spreadsheetId;
+    public static Sheets sheetsService;
+    
+    public static void processDumpFile(Path path) {
+    	System.out.println(path);
+    	CSGOFileParser csgofp;
+		try {
+			csgofp = new CSGOFileParser(path.toString());
+	    	parseInfo(csgofp);
+	    	for (Player player : players) {
+	    		System.out.println(player.toString());
+	    		System.out.println();
+	    	}
+	    	updateInfo();
+	    	updateGraph();
+	    	for (Player player : players) {
+	    		player.clear();
+	    	}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
     public static void main(String[] args) throws IOException {
-    	CSGOFileParser csgofp = new CSGOFileParser("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\info.txt");
-    	parseInfo(csgofp);
-    	for (Player player : players) {
-    		System.out.println(player.toString());
-    		System.out.println();
-    	}
-    	updateInfo();
-    	//updateGraph();
+        spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
+        sheetsService = getSheetsService();
+        
+        try (Stream<Path> paths = Files.walk(Paths.get("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\dump"))) {
+            paths.filter(Files::isRegularFile)
+                .forEach(Quickstart::processDumpFile);
+        }
+        
+        System.out.println("Done.");
     }
 
     public static void updateInfo() throws IOException {
-        String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
-
-        Sheets sheetsService = getSheetsService();
-        
         // How the input data should be interpreted.
         String valueInputOption = "USER_ENTERED";
 
@@ -651,11 +705,30 @@ public class Quickstart {
 		  request.setInsertDataOption(insertDataOption);
 		
 		  response = request.execute();
+		  
+//----
+	      
+		  range = "'OK'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.open_kills);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();		  
     }
 
     public static void updateGraph() throws IOException {
-    	String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
-    	Sheets sheetsService = getSheetsService();
+//    	String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
+//    	Sheets sheetsService = getSheetsService();
     	String range = "Лист2!S2:S6";
     	
     	ValueRange result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute();
