@@ -729,7 +729,7 @@ public class Quickstart {
     public static void updateGraph() throws IOException {
 //    	String spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
 //    	Sheets sheetsService = getSheetsService();
-    	String range = "Лист2!S2:S6";
+    	String range = "Info!S2:S6";
     	
     	ValueRange result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute();
 
@@ -747,7 +747,7 @@ public class Quickstart {
         // How the input data should be inserted.
         String insertDataOption = "INSERT_ROWS";
 
-        range = "Лист3!H2";
+        range = "Rating!H2";
         
         result = sheetsService.spreadsheets().values().get(spreadsheetId, range).execute();
 
@@ -764,7 +764,7 @@ public class Quickstart {
         ValueRange body = new ValueRange()
                 .setValues(new_row);
         
-        range = "Лист3!A:F";
+        range = "Rating!A:F";
         
         Sheets.Spreadsheets.Values.Append request =
             sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
