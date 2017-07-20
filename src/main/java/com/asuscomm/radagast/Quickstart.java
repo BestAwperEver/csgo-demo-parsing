@@ -373,7 +373,29 @@ public class Quickstart {
 		}
     }
     
-    public static void main(String[] args) throws IOException {
+    public static TournamentRate tr;
+    
+    public static void processTournamentDumpFile(Path path) {
+    	System.out.println(path);
+    	CSGOFileParser csgofp;
+
+		try {
+			csgofp = new CSGOFileParser(path.toString());
+			tr.parseInfo(csgofp);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	
+    	tr.players.forEach((nick, player)->{
+    		System.out.println(nick);
+    		System.out.println(player.toString());
+    		System.out.println();
+    	});
+
+    }
+    
+    public static void our_stats() throws IOException {
         spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
         sheetsService = getSheetsService();
         
@@ -383,6 +405,25 @@ public class Quickstart {
         }
         
         System.out.println("Done.");
+    }
+    
+    public static void tournament_stats() throws IOException {
+        spreadsheetId = "1eMu-hgTFU0QIlYlSdmoal4_9Hapme1NT1Rml1DYpvH8";
+        sheetsService = getSheetsService();
+        
+    	tr = new TournamentRate(spreadsheetId, sheetsService);
+        
+        Stream<Path> paths = Files.walk(Paths.get("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\tournament\\dump"));
+        paths.filter(Files::isRegularFile).forEach(Quickstart::processTournamentDumpFile);
+        paths.close();
+        
+        tr.updateInfo();
+        
+        System.out.println("Done.");	
+    }
+    
+    public static void main(String[] args) throws IOException {
+        tournament_stats();
     }
 
     public static void updateInfo() throws IOException {
