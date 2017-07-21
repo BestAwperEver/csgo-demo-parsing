@@ -146,6 +146,11 @@ public class Quickstart {
     	float team_flash;
     	float self_flash;
     	float enemy_flash;
+    	int hegrenades;
+    	int hedamage;
+    	int molotovs;
+    	int molotovdamage;
+    	int flashbangs;
     	public int adr() {
     		return (int)(damage/(float)rounds);
     	}
@@ -169,6 +174,11 @@ public class Quickstart {
     		s.append("\nTeam flash: " + team_flash);
     		s.append("\nEnemy flash: " + enemy_flash);
     		s.append("\nOpen kills: " + open_kills);
+    		s.append("\nHE grenades: " + hegrenades);
+    		s.append("\nHE damage: " + hedamage);
+    		s.append("\nMolotovs: " + molotovs);
+    		s.append("\nMolotov's damage: " + molotovdamage);
+    		s.append("\nFlashbangs: " + flashbangs);
     		return s.toString();
     	}
     	public void clear() {
@@ -189,6 +199,11 @@ public class Quickstart {
     		team_flash = 0;
     		enemy_flash = 0;
     		open_kills = 0;
+    		hegrenades = 0;
+    		molotovs = 0;
+    		molotovdamage = 0;
+    		hedamage = 0;
+    		flashbangs = 0;
     	}
     }
     
@@ -276,9 +291,40 @@ public class Quickstart {
 		    						break;
 		    					}
 		    				}
-		    				if (team_damage == false) player.damage += Integer.parseUnsignedInt(event.get("dmg_health"));
+		    				if (team_damage == false) {
+		    					int damage = Integer.parseUnsignedInt(event.get("dmg_health"));
+		    					player.damage += damage;
+		    					switch (event.get("weapon")) {
+			    				case "hegrenade": {
+			    					player.hedamage += damage;
+			    				} break;
+			    				case "inferno":
+			    				case "molotov_projectile": {
+			    					player.molotovdamage += damage;
+			    				} break;
+			    				}
+		    				}
 		    				break;
 		    			}
+		    		}
+		    	} break;
+		    	case "weapon_fire": {
+		    		for (Player player : players) {
+		    			if (event.get("userid").equals(player.nick)) {
+		    				switch (event.get("weapon")) {
+		    				case "hegrenade": {
+		    					player.hegrenades++;
+		    				} break;
+		    				case "incgrenade":
+		    				case "molotov": {
+		    					player.molotovs++;
+		    				} break;
+		    				case "flashbang": {
+		    					player.flashbangs++;
+		    				} break;
+		    				}
+		    				break;
+		    			}		    			
 		    		}
 		    	} break;
 		    	case "player_blind": {
@@ -363,7 +409,7 @@ public class Quickstart {
 	    		System.out.println();
 	    	}
 	    	updateInfo();
-	    	updateGraph();
+	    	//updateGraph();
 	    	for (Player player : players) {
 	    		player.clear();
 	    	}
@@ -423,7 +469,7 @@ public class Quickstart {
     }
     
     public static void main(String[] args) throws IOException {
-        tournament_stats();
+        our_stats();
     }
 
     public static void updateInfo() throws IOException {
@@ -767,7 +813,102 @@ public class Quickstart {
 		  request.setValueInputOption(valueInputOption);
 		  request.setInsertDataOption(insertDataOption);
 		
-		  response = request.execute();		  
+		  response = request.execute();
+		  
+//----
+	      
+		  range = "'HE'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.hegrenades);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();	
+		  
+//----
+	      
+		  range = "'FL'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.flashbangs);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();	
+		  
+//----
+	      
+		  range = "'ML'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.molotovs);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();	
+		  
+//----
+	      
+		  range = "'MLD'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.molotovdamage);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();
+		  
+//----
+	      
+		  range = "'HED'!B:F";
+		  
+		  objectList.clear();
+		  
+		  for (Player player : players) {
+		  	objectList.add(player.hedamage);
+		  }
+		  values = Arrays.asList(objectList);
+		  
+		  body.setValues(values);
+		  
+		  request = sheetsService.spreadsheets().values().append(spreadsheetId, range, body);
+		  request.setValueInputOption(valueInputOption);
+		  request.setInsertDataOption(insertDataOption);
+		
+		  response = request.execute();	
     }
 
     public static void updateGraph() throws IOException {
