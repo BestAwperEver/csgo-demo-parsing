@@ -945,7 +945,7 @@ public class TeamRate {
 		
 		  response = request.execute();	
 		  
-----
+//----
         
         range = "'1CL'!B:F";
         
