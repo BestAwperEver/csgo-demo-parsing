@@ -132,9 +132,11 @@ public class Quickstart {
     	String nick;
     	int kills;
     	int deaths;
+    	boolean dead = true;
     	int headshots;
     	int rounds = 1;
     	int k1, k2, k3, k4, k5;
+    	int cl1, cl2, cl3, cl4, cl5;
     	int kills_cur;
     	int assists;
     	int mvp;
@@ -165,6 +167,11 @@ public class Quickstart {
     		s.append("\n3 kills: " + k3);
     		s.append("\n4 kills: " + k4);
     		s.append("\n5 kills: " + k5);
+    		s.append("\n1 vs 1: " + cl1);
+    		s.append("\n1 vs 2: " + cl2);
+    		s.append("\n1 vs 3: " + cl3);
+    		s.append("\n1 vs 4: " + cl4);
+    		s.append("\n1 vs 5: " + cl5);
     		s.append("\nAssists: " + assists);
     		s.append("\nMVPs: " + mvp);
     		s.append("\nADR: " + adr());
@@ -183,6 +190,7 @@ public class Quickstart {
     	public void clear() {
     		kills = 0;
     		deaths = 0;
+    		dead = true;
     		headshots = 0;
     		rounds = 1;
     		k1 = 0;
@@ -190,6 +198,11 @@ public class Quickstart {
     		k3 = 0;
     		k4 = 0;
     		k5 = 0;
+    		cl1 = 0;
+    		cl2 = 0;
+    		cl3 = 0;
+    		cl4 = 0;
+    		cl5 = 0;
     		assists = 0;
     		mvp = 0;
     		damage = 0;
@@ -212,11 +225,16 @@ public class Quickstart {
 			new Player("aydin"),
 			new Player("lolwto?!"),
 			new Player("Sidekrown"));
-    
+	
+    @Deprecated
     public static void parseInfo(CSGOFileParser csgofp) throws FileNotFoundException, IOException {
     	
     	boolean game_started = false;
     	boolean open_kill = false;
+    	
+//        int enemies_before_clutch = 0;
+//        int teammates = 0;
+//        boolean clutch = false;
     		
 //    	Map<Integer, String> indices = new HashMap<Integer, String>();
     	Map<String, String> event = csgofp.nextEvent();
@@ -247,7 +265,6 @@ public class Quickstart {
 		    		for (Player player : players) {
 			    		if (event.get("userid").equals(player.nick)) {
 		    				player.disconnected = true;
-		    				break;
 		    			}
 		    		}
 		    	} break;
@@ -420,6 +437,8 @@ public class Quickstart {
     
     public static TournamentRate tr;
     
+    public static TeamRate tm;
+    
     public static void processTournamentDumpFile(Path path) {
     	System.out.println(path);
     	CSGOFileParser csgofp;
@@ -440,6 +459,31 @@ public class Quickstart {
 
     }
     
+    public static void processTeamDumpFile(Path path) throws IOException {
+    	System.out.println(path);
+    	CSGOFileParser csgofp;
+
+		try {
+			csgofp = new CSGOFileParser(path.toString());
+			tm.parseInfo(csgofp);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    	tm.players.forEach((nick, player)->{
+    		System.out.println(nick);
+    		System.out.println(player.toString());
+    		System.out.println();
+    	});
+		
+        tm.updateInfo();
+    	
+        tm.clear_players_info();
+
+    }
+    
+    @Deprecated
     public static void our_stats() throws IOException {
         spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
         sheetsService = getSheetsService();
@@ -467,8 +511,28 @@ public class Quickstart {
         System.out.println("Done.");	
     }
     
+	public static void team_stats() throws IOException {
+		spreadsheetId = "1fEhlb1Q00ihLRBU8T8VoH4TksDmo-6q4mf1vuhST2HA";
+        sheetsService = getSheetsService();
+        
+    	tm = new TeamRate(spreadsheetId, sheetsService);
+        
+        Stream<Path> paths = Files.walk(Paths.get("d:\\Games\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\dump"));
+        paths.filter(Files::isRegularFile).forEach(t -> {
+			try {
+				processTeamDumpFile(t);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
+        paths.close();        
+        
+        System.out.println("Done.");	
+    }
+    
     public static void main(String[] args) throws IOException {
-        our_stats();
+        team_stats();
     }
 
     public static void updateInfo() throws IOException {
