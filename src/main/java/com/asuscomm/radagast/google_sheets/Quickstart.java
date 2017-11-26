@@ -328,14 +328,14 @@ public class Quickstart {
 		    		for (Player player : players) {
 		    			if (event.get("userid").equals(player.nick)) {
 		    				switch (event.get("weapon")) {
-		    				case "hegrenade": {
+		    				case "weapon_hegrenade": {
 		    					player.hegrenades++;
 		    				} break;
-		    				case "incgrenade":
-		    				case "molotov": {
+		    				case "weapon_incgrenade":
+		    				case "weapon_molotov": {
 		    					player.molotovs++;
 		    				} break;
-		    				case "flashbang": {
+		    				case "weapon_flashbang": {
 		    					player.flashbangs++;
 		    				} break;
 		    				}
@@ -478,6 +478,8 @@ public class Quickstart {
     	});
 		
         tm.updateInfo();
+        
+        updateGraph();
     	
         tm.clear_players_info();
 
@@ -517,7 +519,7 @@ public class Quickstart {
         
     	tm = new TeamRate(spreadsheetId, sheetsService);
         
-        Stream<Path> paths = Files.walk(Paths.get("d:\\Games\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\dump"));
+        Stream<Path> paths = Files.walk(Paths.get("d:\\Games\\steamapps\\common\\Counter-Strike Global Offensive\\csgo\\replays\\grammsov\\dump"));
         paths.filter(Files::isRegularFile).forEach(t -> {
 			try {
 				processTeamDumpFile(t);

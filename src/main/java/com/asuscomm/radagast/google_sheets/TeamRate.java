@@ -357,14 +357,14 @@ public class TeamRate {
 		    		players.putIfAbsent(event.get("userid"), new Player(event.get("userid")));
 		    		Player player = players.get(event.get("userid"));
     				switch (event.get("weapon")) {
-	    				case "hegrenade": {
+	    				case "weapon_hegrenade": {
 	    					player.hegrenades++;
 	    				} break;
-	    				case "incgrenade":
-	    				case "molotov": {
+	    				case "weapon_incgrenade":
+	    				case "weapon_molotov": {
 	    					player.molotovs++;
 	    				} break;
-	    				case "flashbang": {
+	    				case "weapon_flashbang": {
 	    					player.flashbangs++;
 	    				} break;
     				}	
